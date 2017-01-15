@@ -1,34 +1,50 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
-module Lib where
+module Package where
 
 import Control.Monad.Identity (Identity, runIdentity)
 import Control.Monad.State (StateT, execStateT)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (Reader, ReaderT, asks, runReaderT)
 
-import Control.Lens (Lens', (<>=), set, lens)
+import Control.Lens (Lens', (<>~), (<>=), lens, set, view)
 
 import Data.List (isPrefixOf)
 import Data.Monoid ((<>))
 import Data.String (IsString(..))
 import Data.Text (Text)
-
-
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+import qualified Data.Text as Text (unwords)
 
 type PortagerT c a = StateT c (ReaderT PortagerConfig Identity) a
 
+class ShowText a where
+  showText :: a -> Text
+
+instance ShowText Text where
+  showText = id
+
+instance ShowText a => ShowText [a] where
+  showText = Text.unwords . map showText
+
 type Name = Text
 
-newtype Atom = Atom Name deriving (Eq, Show)
+newtype Atom = Atom Name deriving (Eq, Ord, Show)
+
+instance ShowText Atom where
+  showText (Atom n) = n
 
 instance IsString Atom where
   fromString = Atom . fromString
 
 data Use = Use Bool Text deriving (Eq, Show)
+
+instance Ord Use where
+  Use _ t `compare` Use _ t' = t `compare` t'
+
+instance ShowText Use where
+  showText (Use True t) = t
+  showText (Use False t) = "-" <> t
 
 instance IsString Use where
   fromString s
@@ -37,7 +53,13 @@ instance IsString Use where
 
 newtype Keyword = Keyword Text deriving (Eq, Show)
 
+instance ShowText Keyword where
+  showText (Keyword k) = k
+
 newtype License = License Text deriving (Eq, Show)
+
+instance ShowText License where
+  showText (License l) = l
 
 newtype Arch = Arch Text deriving (Eq, Show)
 
@@ -51,7 +73,6 @@ data Package = Package
 
 instance IsString Package where
   fromString s = Package (fromString s) mempty 
-
 data PackageConfiguration = PackageConfiguration
   { _useflags :: [Use]
   , _keywords :: [Keyword] 
@@ -161,11 +182,11 @@ amd64 = Arch "amd64"
 x86 :: Arch
 x86 = Arch "x86"
 
-testSet :: ReaderT PortagerConfig Identity Set
-testSet = "eurus" `with`
-            pkgs [
-              "sys-firmware/iwl7260-ucode" `with` do
-                  unstable
-                  use [ "bluetooth", "-test" ]
-                  dep [ "sys-firmware/iwl3160-7260-bt-ucode" `with` unstable ]
-            ]
+eurus :: ReaderT PortagerConfig Identity Set
+eurus = "eurus" `with`
+          pkgs [
+            "sys-firmware/iwl7260-ucode" `with` do
+                unstable
+                use [ "bluetooth", "-test" ]
+                dep [ "sys-firmware/iwl3160-7260-bt-ucode" `with` unstable ]
+          ]

@@ -1,6 +1,8 @@
 module Main where
 
-import Lib
+import Package
+import Flatten
+import Writes
 
 main :: IO ()
-main = someFunc
+main = return ()
