@@ -1,4 +1,4 @@
-module Flatten where
+module Portager.Flatten where
 
 import Data.Foldable (foldr')
 import Data.Semigroup (First(..), Semigroup(..), (<>), sconcat)
@@ -6,7 +6,7 @@ import Data.List (groupBy, union)
 import Data.Maybe (mapMaybe)
 import Data.List.NonEmpty (nonEmpty)
 
-import Package
+import Portager.Package
 
 data FlatPackage = FlatPackage 
   { _fpAtom :: Atom

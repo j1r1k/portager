@@ -1,26 +1,31 @@
-name:                portager-ng
+name:                portager
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            DSL for configuring world sets in portage
 description:         Please see README.md
-homepage:            https://github.com/j1r1k/portager-ng#readme
+homepage:            https://github.com/j1r1k/portager
 license:             BSD3
 license-file:        LICENSE
 author:              Jiri Marsicek
 maintainer:          jiri.marsicek@gmail.com
 copyright:           2016 Jiri Marsicek
-category:            Web
+category:            DSL
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Package
-                     , Flatten
-                     , Writes
+  exposed-modules:     Portager
+                     , Portager.Package
+                     , Portager.Flatten
+                     , Portager.Options
+                     , Portager.Writes
   build-depends:       base >= 4.7 && < 5
+                     , directory
+                     , filepath
                      , lens
                      , mtl
+                     , optparse-applicative
                      , text
                      , transformers
   default-language:    Haskell2010
@@ -30,18 +35,18 @@ executable portager-ng-exe
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
-                     , portager-ng
+                     , portager
   default-language:    Haskell2010
 
-test-suite portager-ng-test
+test-suite portager-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
-                     , portager-ng
+                     , portager
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
 source-repository head
   type:     git
-  location: https://github.com/j1r1k/portager-ng
+  location: https://github.com/j1r1k/portager

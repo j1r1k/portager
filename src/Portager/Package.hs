@@ -1,7 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
-module Package where
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts #-}
+module Portager.Package where
 
 import Control.Monad.Identity (Identity, runIdentity)
 import Control.Monad.State (StateT, execStateT)
@@ -16,7 +18,7 @@ import Data.String (IsString(..))
 import Data.Text (Text)
 import qualified Data.Text as Text (unwords)
 
-type PortagerT c a = StateT c (ReaderT PortagerConfig Identity) a
+type PortageT c a = StateT c (ReaderT PortagerConfig Identity) a
 
 class ShowText a where
   showText :: a -> Text
@@ -58,6 +60,9 @@ instance ShowText Keyword where
 
 newtype License = License Text deriving (Eq, Show)
 
+instance IsString License where
+  fromString = License . fromString
+
 instance ShowText License where
   showText (License l) = l
 
@@ -80,6 +85,9 @@ data PackageConfiguration = PackageConfiguration
   , _dependencies :: [Package]
   } deriving (Eq, Show)
 
+instance IsString a => IsString (Reader PortagerConfig a) where
+  fromString = return . fromString
+
 keywordsL :: Lens' PackageConfiguration [Keyword]
 keywordsL = lens _keywords (\cfg nks -> cfg { _keywords = nks })
 
@@ -91,15 +99,17 @@ instance Monoid PackageConfiguration where
   PackageConfiguration u k d l `mappend` PackageConfiguration u' k' d' l' = 
     PackageConfiguration (u <> u') (k <> k') (d <> d') (l <> l')
 
-license :: License -> PortagerT PackageConfiguration ()
+license :: License -> PortageT PackageConfiguration ()
 license l = licencesL <>= [l]
 
-keywords :: [Keyword] -> PortagerT PackageConfiguration ()
+keywords :: [Keyword] -> PortageT PackageConfiguration ()
 keywords ks = keywordsL <>= ks
 
 class WithUseflags a where
   useL :: Lens' a [Use]
-  use :: [Use] -> PortagerT a ()
+  use :: [Use] -> PortageT a ()
+  uses :: [Use] -> PortageT a ()
+  uses = use
   use us = useL <>= us
 
 instance WithUseflags PackageConfiguration where
@@ -110,7 +120,10 @@ instance WithUseflags SetConfiguration where
 
 class WithDependencies a where
   depL :: Lens' a [Package]
-  dep :: [ReaderT PortagerConfig Identity Package] -> PortagerT a ()
+  dep :: [ReaderT PortagerConfig Identity Package] -> PortageT a ()
+  -- just alias for nice alignments
+  deps :: [ReaderT PortagerConfig Identity Package] -> PortageT a ()
+  deps = dep
   dep ds = do
     ds' <- lift $ sequence ds
     depL <>= ds'
@@ -143,50 +156,32 @@ data Set = Set
 instance IsString Set where
   fromString s = Set (fromString s) mempty
 
-instance IsString (Reader PortagerConfig Set) where
-  fromString = return . fromString
-
-pkgs :: [ReaderT PortagerConfig Identity Package] -> PortagerT SetConfiguration ()
+pkgs :: [ReaderT PortagerConfig Identity Package] -> PortageT SetConfiguration ()
 pkgs ps = do
   ps' <- lift $ sequence ps
   setPackagesL <>= ps'
 
-unstable :: PortagerT PackageConfiguration ()
+unstable :: PortageT PackageConfiguration ()
 unstable = do
   a <- lift $ asks _arch
   keywords [Keyword ("~" <> arch a)]
 
-class Monoid c => With w c where
-  cfgL :: Lens' w c
-  with :: w -> PortagerT c () -> ReaderT PortagerConfig Identity w
+class (Monoid (Configuration w)) => With w where
+  type Configuration w
+  cfgL :: Lens' w (Configuration w)
+  with :: w -> PortageT (Configuration w) () -> ReaderT PortagerConfig Identity w
   with w s = do
     cfg <- execStateT s mempty
     return $ set cfgL cfg w
 
-instance With Package PackageConfiguration where
+instance With Package where
+  type Configuration Package = PackageConfiguration
   cfgL = lens _configuration (\p nc -> p { _configuration = nc })
 
-instance With Set SetConfiguration where
+instance With Set where
+  type Configuration Set = SetConfiguration
   cfgL = lens _setConfiguration (\s nc -> s { _setConfiguration = nc })
 
 data PortagerConfig = PortagerConfig
   { _arch :: Arch
   } deriving (Eq, Show)
-
-withConfig :: Arch -> ReaderT PortagerConfig Identity a -> a
-withConfig a r = runIdentity $ runReaderT r (PortagerConfig a)
-
-amd64 :: Arch
-amd64 = Arch "amd64"
-
-x86 :: Arch
-x86 = Arch "x86"
-
-eurus :: ReaderT PortagerConfig Identity Set
-eurus = "eurus" `with`
-          pkgs [
-            "sys-firmware/iwl7260-ucode" `with` do
-                unstable
-                use [ "bluetooth", "-test" ]
-                dep [ "sys-firmware/iwl3160-7260-bt-ucode" `with` unstable ]
-          ]
