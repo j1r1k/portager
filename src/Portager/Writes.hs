@@ -17,7 +17,7 @@ import System.FilePath (FilePath, (</>))
 
 import Text.Printf (printf)
 
-import Portager.Package
+import Portager.DSL
 import Portager.Flatten (FlatPackage(..), flattenSet)
 import Portager.Options (Options(..), WorldSet)
 
@@ -74,7 +74,6 @@ createPortageConfig s =
         , _portagePackageAcceptKeywords = toPortagePackageAcceptKeywords flat 
         , _portagePackageLicense = toPortagePackageLicense flat
         }
-
 
 writeLines :: FilePath -> [Text] -> IO ()
 writeLines fp = Text.writeFile fp . Text.unlines

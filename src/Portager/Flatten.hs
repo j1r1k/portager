@@ -6,7 +6,7 @@ import Data.List (groupBy, union)
 import Data.Maybe (mapMaybe)
 import Data.List.NonEmpty (nonEmpty)
 
-import Portager.Package
+import Portager.DSL
 
 data FlatPackage = FlatPackage 
   { _fpAtom :: Atom

@@ -3,9 +3,6 @@ module Main where
 
 import Portager
 
-cfg :: PortagerConfig
-cfg = PortagerConfig { _arch = amd64 }
-
 baseCore :: PortageR Set
 baseCore = "base-core" `with` do
     pkgs [ "app-admin/python-updater"
@@ -520,6 +517,9 @@ eurus = "eurus" `with` do
     deps [ "x11-libs/libva-intel-driver" `with` use [ "abi_x86_32" ]
          , "sys-apps/systemd" `with` use [ "gnuefi" ]
          ]
+
+cfg :: PortagerConfiguration
+cfg = PortagerConfiguration { _arch = amd64 }
 
 main :: IO ()
 main = portager cfg
