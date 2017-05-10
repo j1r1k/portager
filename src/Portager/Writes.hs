@@ -35,9 +35,9 @@ toPortagePackageUse = mapMaybe toPackageUse
 
 toPackageAcceptKeywords :: FlatPackage -> Maybe Text
 toPackageAcceptKeywords fp
-  | null keywords = Nothing
-  | otherwise = Just $ withAtom fp $ showText keywords
-  where keywords = _fpKeywords fp
+  | null kws = Nothing
+  | otherwise = Just $ withAtom fp $ showText kws
+  where kws = _fpKeywords fp
 
 toPortagePackageAcceptKeywords :: [FlatPackage] -> [Text]
 toPortagePackageAcceptKeywords = mapMaybe toPackageAcceptKeywords
@@ -79,10 +79,10 @@ writeLines :: FilePath -> [Text] -> IO ()
 writeLines fp = Text.writeFile fp . Text.unlines
 
 writePortageSetFile :: FilePath -> FilePath -> [Text] -> ReaderT Options IO ()
-writePortageSetFile dir file lines = unless (null lines) $ do
+writePortageSetFile dir file lns = unless (null lns) $ do
     root <- asks _targetDir
     lift $ createDirectoryIfMissing False (root </> dir)
-    lift $ writeLines (root </> dir </> file) lines
+    lift $ writeLines (root </> dir </> file) lns
 
 writePortageSetConfig :: [WorldSet] -> Int -> PortageSetConfig -> ReaderT Options IO ()
 writePortageSetConfig ws n (PortageSetConfig pName pSet pUseflags pKeywords pLicenses)
