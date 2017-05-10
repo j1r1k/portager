@@ -21,13 +21,24 @@ import Portager.Options (Options(..), WorldSet, withOptions)
 import Portager.Writes (createPortageConfig, writePortageSetConfigs)
 import Portager.DSL
 
-type PortageR a = ReaderT PortagerConfiguration Identity a
+newtype PortageR a = PortageR (ReaderT PortagerConfiguration Identity a)
+
+instance Functor PortageR where
+  fmap f (PortageR r) = PortageR (fmap f r)
+
+instance Applicative PortageR where
+  pure = PortageR . pure
+  (PortageR f) <*> (PortageR a) = PortageR (f <*> a)
+
+instance Monad PortageR where
+  (PortageR a) >>= f = PortageR (a >>= unwrapPortageR . f)
+    where unwrapPortageR (PortageR r) = r
 
 instance IsString a => IsString (PortageR a) where
-  fromString = return . fromString
+  fromString = pure . fromString
 
-runPortageR :: PortagerConfiguration -> ReaderT PortagerConfiguration Identity a -> a
-runPortageR cfg r = runIdentity $ runReaderT r cfg
+runPortageR :: PortagerConfiguration -> PortageR a -> a
+runPortageR cfg (PortageR r) = runIdentity $ runReaderT r cfg
 
 parseWorldSets :: Text -> [WorldSet]
 parseWorldSets = mapMaybe (Text.stripPrefix "@") . Text.lines
