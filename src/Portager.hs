@@ -3,8 +3,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Portager (
     module Portager.DSL
-  , PortageR
   , portager
+  , PortageR
   , runPortageR
 ) where
 
@@ -40,13 +40,15 @@ instance IsString a => IsString (PortageR a) where
 runPortageR :: PortagerConfiguration -> PortageR a -> a
 runPortageR cfg (PortageR r) = runIdentity $ runReaderT r cfg
 
+-- |Parses a text to a list of 'WorldSet's
 parseWorldSets :: Text -> [WorldSet]
 parseWorldSets = mapMaybe (Text.stripPrefix "@") . Text.lines
 
+-- |Reads portage @world_sets@ file
 readWorldSets :: FilePath -> IO [WorldSet]
 readWorldSets = fmap parseWorldSets . Text.readFile
 
-portager :: PortagerConfiguration -> [PortageR Set] -> IO ()
+portager :: PortagerConfiguration -> [PortageR PackageSet] -> IO ()
 portager cfg ps = withOptions $ \opts -> do
   ws <- readWorldSets (_worldSets opts)
   runReaderT (writePortageSetConfigs ws $ map createPortageConfig $ runPortageR cfg $ sequence ps) opts

@@ -5,9 +5,9 @@ import Control.Monad (unless)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (ReaderT, asks)
 
-import Data.List (sort)
 import Data.Maybe (mapMaybe)
 import Data.Semigroup ((<>))
+import qualified Data.Set as Set (toAscList)
 import Data.Text (Text)
 import qualified Data.Text as Text (unlines, unpack)
 import qualified Data.Text.IO as Text (writeFile)
@@ -27,8 +27,8 @@ withAtom fp t = showText (_fpAtom fp) <> " " <> t
 toPackageUse :: FlatPackage -> Maybe Text
 toPackageUse fp
   | null useflags = Nothing
-  | otherwise = Just $ withAtom fp $ showText (sort useflags)
-  where useflags = _fpUseflags fp
+  | otherwise = Just $ withAtom fp $ showText useflags
+  where useflags = Set.toAscList $_fpUseflags fp
 
 toPortagePackageUse :: [FlatPackage] -> [Text]
 toPortagePackageUse = mapMaybe toPackageUse
@@ -37,7 +37,7 @@ toPackageAcceptKeywords :: FlatPackage -> Maybe Text
 toPackageAcceptKeywords fp
   | null kws = Nothing
   | otherwise = Just $ withAtom fp $ showText kws
-  where kws = _fpKeywords fp
+  where kws = Set.toAscList $_fpKeywords fp
 
 toPortagePackageAcceptKeywords :: [FlatPackage] -> [Text]
 toPortagePackageAcceptKeywords = mapMaybe toPackageAcceptKeywords
@@ -46,7 +46,7 @@ toPackageLicense :: FlatPackage -> Maybe Text
 toPackageLicense fp
   | null licenses = Nothing
   | otherwise = Just $ withAtom fp $ showText licenses
-  where licenses = _fpLicenses fp
+  where licenses = Set.toAscList $_fpLicenses fp
 
 toPortagePackageLicense :: [FlatPackage] -> [Text]
 toPortagePackageLicense = mapMaybe toPackageLicense
@@ -63,10 +63,10 @@ data PortageSetConfig =
     , _portagePackageLicense :: [Text]
     } deriving (Eq, Show)
 
-createPortageConfig :: Set -> PortageSetConfig
+createPortageConfig :: PackageSet -> PortageSetConfig
 createPortageConfig s = 
   let cfg = _setConfiguration s
-      flat = sort $ flattenSet s
+      flat = Set.toAscList $ flattenSet s
    in PortageSetConfig 
         { _portageSetName = _setName s
         , _portageSet = toPortageSet cfg

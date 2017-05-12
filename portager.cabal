@@ -6,8 +6,8 @@ homepage:            https://github.com/j1r1k/portager
 license:             BSD3
 license-file:        LICENSE
 author:              Jiri Marsicek
-maintainer:          jiri.marsicek@gmail.com
-copyright:           2016 Jiri Marsicek
+maintainer:          Jiri Marsicek <jiri.marsicek@gmail.com>
+copyright:           2017 Jiri Marsicek
 category:            DSL
 build-type:          Simple
 extra-source-files:  README.md
@@ -22,6 +22,7 @@ library
                      , Portager.Writes
   ghc-options:         -Wall
   build-depends:       base >= 4.7 && < 5
+                     , containers
                      , directory
                      , filepath
                      , lens
@@ -35,8 +36,12 @@ test-suite portager-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
+  other-modules:       Portager.DSLSpec
+                     , Portager.FlattenSpec
+                    
   build-depends:       base
                      , portager
+                     , containers
                      , hspec
                      , QuickCheck
                      , mtl

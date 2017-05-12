@@ -23,7 +23,7 @@ module Portager.DSL
     , SetConfiguration(..)
     , setPackagesL
     , pkgs
-    , Set(..)
+    , PackageSet(..)
     , WithUseflags(..)
     , WithDependencies(..)
     , With(..)
@@ -97,7 +97,7 @@ instance ShowText Use where
   showText (Use False t) = "-" <> t
 
 
-newtype Keyword = Keyword Text deriving (Eq, Show)
+newtype Keyword = Keyword Text deriving (Eq, Ord, Show)
 
 instance IsString Keyword where
   fromString = Keyword . fromString
@@ -105,7 +105,7 @@ instance IsString Keyword where
 instance ShowText Keyword where
   showText (Keyword k) = k
 
-newtype License = License Text deriving (Eq, Show)
+newtype License = License Text deriving (Eq, Ord, Show)
 
 instance IsString License where
   fromString = License . fromString
@@ -149,6 +149,9 @@ data Package = Package
   { _atom :: Atom
   , _configuration :: PackageConfiguration
   } deriving (Eq, Show)
+
+instance Ord Package where
+  a `compare` b = _atom a `compare` _atom b
 
 instance IsString Package where
   fromString s = Package (fromString s) mempty
@@ -204,13 +207,13 @@ pkgs ps = do
   ps' <- lift $ sequence ps
   setPackagesL <>= ps'
 
-data Set = Set
+data PackageSet = PackageSet
   { _setName :: Name
   , _setConfiguration :: SetConfiguration
   } deriving (Eq, Show)
 
-instance IsString Set where
-  fromString s = Set (fromString s) mempty
+instance IsString PackageSet where
+  fromString s = PackageSet (fromString s) mempty
 
 
 class (Monoid (Configuration w)) => With w where
@@ -225,6 +228,6 @@ instance With Package where
   type Configuration Package = PackageConfiguration
   configurationL = lens _configuration (\p nc -> p { _configuration = nc })
 
-instance With Set where
-  type Configuration Set = SetConfiguration
+instance With PackageSet where
+  type Configuration PackageSet = SetConfiguration
   configurationL = lens _setConfiguration (\s nc -> s { _setConfiguration = nc })

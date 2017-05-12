@@ -1,56 +1,84 @@
+-- |
+-- Module      :  Portager.Flatten
+-- Copyright   :  (C) 2017 Jiri Marsicek
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  Jiri Marsicek <jiri.marsicek@gmail.com>
+--
+-- This module provides functionality for converting 'Package's to 'FlatPackage's.
+--
 module Portager.Flatten where
 
 import Data.Foldable (foldr')
-import Data.Semigroup (First(..), Semigroup(..), (<>), sconcat)
-import Data.List (groupBy, union)
-import Data.Maybe (mapMaybe)
+import qualified Data.List as List (groupBy)
 import Data.List.NonEmpty (nonEmpty)
+import Data.Maybe (mapMaybe)
+import Data.Semigroup (Semigroup(..))
+import Data.Set (Set)
+import qualified Data.Set as Set (fromList, singleton, toAscList, union)
 
 import Portager.DSL
 
-data FlatPackage = FlatPackage 
+-- |Flat representation of 'Package' without nested dependencies.
+data FlatPackage = FlatPackage
   { _fpAtom :: Atom
-  , _fpUseflags :: [Use]
-  , _fpKeywords :: [Keyword]
-  , _fpLicenses :: [License]
+  , _fpUseflags :: Set Use
+  , _fpKeywords :: Set Keyword
+  , _fpLicenses :: Set License
   } deriving (Eq, Show)
 
 instance Ord FlatPackage where
   fp `compare` fp' = _fpAtom fp `compare` _fpAtom fp'
 
 instance Semigroup FlatPackage where
-  (FlatPackage a u k l) <> (FlatPackage a' u' k' l') = 
-    FlatPackage a (u `unionUseflags` u') (k `union` k') (l `union` l')
+  FlatPackage atom us ks ls <> FlatPackage _ us' ks' ls' = 
+    FlatPackage atom (us `Set.union` us') (ks `Set.union` ks') (ls `Set.union` ls')
 
-safeSconcat :: Semigroup a => [a] -> Maybe a
-safeSconcat = fmap sconcat . nonEmpty
+mergeLists :: Ord a => [a] -> [a] -> [a]
+mergeLists [] bs = bs
+mergeLists as [] = as
+mergeLists (a : as) (b : bs)
+  | a <= b = a : mergeLists as (b : bs)
+  | otherwise = b : mergeLists (a : as) bs
 
-unionBy :: (Semigroup a, Eq b) => (a -> b) -> [a] -> [a] -> [a]
-unionBy get as as' = mapMaybe safeSconcat $ groupBy (\a b -> get a == get b) $ as ++ as'
+merge :: (Ord a, Semigroup a, Eq b) => (a -> b) -> Set a -> Set a -> Set a
+merge get lefts rights =
+  Set.fromList $
+    map sconcat $
+    mapMaybe nonEmpty $
+    List.groupBy (\a b -> get a == get b) $
+    mergeLists (Set.toAscList lefts) (Set.toAscList rights)
 
-unionUseflags :: [Use] -> [Use] -> [Use]
-unionUseflags as bs = getFirst <$> unionBy (flag . getFirst) (First <$> as) (First <$> bs)
-  where flag (Use _ t) = t
+mergePackages :: Set FlatPackage -> Set FlatPackage -> Set FlatPackage
+mergePackages = merge _fpAtom
 
-flattenPackage :: [Use] -> Package -> FlatPackage
-flattenPackage global pkg = 
-  let cfg = _configuration pkg 
-   in FlatPackage (_atom pkg) (_useflags cfg `unionUseflags` global) (_keywords cfg) (_licenses cfg)
+-- |Convert a 'Package' to a 'FlatPackage' with globals 'Use' flags applied.
+-- Package 'Use' flags take precedence before globals 'Use' flags.
+flattenPackage :: Set Use -> Package -> FlatPackage
+flattenPackage globals pkg =
+  let pkgcfg = _configuration pkg
+      useflags = (Set.fromList $ _useflags pkgcfg) `Set.union` globals
+   in FlatPackage (_atom pkg) useflags (Set.fromList $ _keywords pkgcfg) (Set.fromList $ _licenses pkgcfg)
 
-unionFlatPackages :: [FlatPackage] -> [FlatPackage] -> [FlatPackage]
-unionFlatPackages = unionBy _fpAtom
+-- |Converts a 'Package' to a list of 'FlatPackages' with set 'Use' flags applied.
+flatten :: Set Use -> Package -> Set FlatPackage
+flatten globals pkg =
+  let fp = Set.singleton $ flattenPackage globals pkg
+      fdeps = flattenPackages globals $ _dependencies $ _configuration pkg
+   in mergePackages fp fdeps
 
-flatten :: SetConfiguration -> Package -> [FlatPackage]
-flatten cfg pkg = 
-  let fp = flattenPackage (_setUseflags cfg) pkg 
-      fdeps = (_dependencies . _configuration) pkg >>= flatten cfg
-   in [fp] `unionFlatPackages` fdeps
+-- |Convert a list of 'Package's to a list of 'FlatPackages' with set 'Use' flags applied.
+-- See 'flatten' for details on how a single 'Package' is converted to a list of 'FlatPackage's.
+flattenPackages :: Set Use -> [Package] -> Set FlatPackage
+flattenPackages globals = foldr' step mempty
+  where step pkg flats = mergePackages flats $ flatten globals pkg
 
-flattenPackages :: SetConfiguration -> [Package] -> [FlatPackage]
-flattenPackages cfg = foldr' step mempty
-  where step pkg flats = flats `unionFlatPackages` flatten cfg pkg
-
-flattenSet :: Set -> [FlatPackage]
-flattenSet s = 
+-- |Converts a 'PackageSet' to a list of 'FlatPackage's.
+-- See 'flattenPackages' for details on how list of 'Package's is converted to a list of 'FlatPackage's.
+flattenSet :: PackageSet -> Set FlatPackage
+flattenSet s =
   let cfg = _setConfiguration s
-  in flattenPackages cfg (_setPackages cfg) `unionFlatPackages` flattenPackages cfg (_setDependencies cfg)
+      globals = Set.fromList $ _setUseflags cfg 
+      setPkgs = flattenPackages globals (_setPackages cfg)
+      setDeps = flattenPackages globals (_setDependencies cfg)
+   in mergePackages setPkgs setDeps
