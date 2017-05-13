@@ -12,7 +12,7 @@ import Test.QuickCheck
 import Portager.DSL
 
 instance Arbitrary Text where
-    arbitrary = Text.pack <$> (resize 20 $ arbitrary)
+    arbitrary = Text.pack <$> (resize 5 $ arbitrary)
 
 instance Arbitrary Arch where
     arbitrary = Arch <$> arbitrary
@@ -53,8 +53,14 @@ instance Arbitrary PackageSet where
 spec :: IO ()
 spec = hspec $ do
   describe "Protager.DSL" $ do
+
     describe "keywords" $ do
       it "appending empty keywords does not change configuration" $
         property $ \cfg -> execState (keywords mempty) cfg == cfg
+
       it "appends keyword to keywords" $ do
         property $ \kws cfg -> execState (keywords kws) cfg == cfg { _keywords = (_keywords cfg) <> kws }
+
+    describe "license" $ do
+      it "appends license to licenses" $ do
+        property $ \l cfg -> execState (license l) cfg == cfg { _licenses = (_licenses cfg) <> [l] }

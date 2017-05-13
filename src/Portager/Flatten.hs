@@ -57,8 +57,10 @@ mergePackages = merge _fpAtom
 flattenPackage :: Set Use -> Package -> FlatPackage
 flattenPackage globals pkg =
   let pkgcfg = _configuration pkg
-      useflags = (Set.fromList $ _useflags pkgcfg) `Set.union` globals
-   in FlatPackage (_atom pkg) useflags (Set.fromList $ _keywords pkgcfg) (Set.fromList $ _licenses pkgcfg)
+      useflags = Set.fromList $ _useflags pkgcfg
+      keywords = Set.fromList $ _keywords pkgcfg
+      licenses = Set.fromList $ _licenses pkgcfg
+   in FlatPackage (_atom pkg) (useflags `Set.union` globals) keywords licenses
 
 -- |Converts a 'Package' to a list of 'FlatPackages' with set 'Use' flags applied.
 flatten :: Set Use -> Package -> Set FlatPackage
@@ -78,7 +80,7 @@ flattenPackages globals = foldr' step mempty
 flattenSet :: PackageSet -> Set FlatPackage
 flattenSet s =
   let cfg = _setConfiguration s
-      globals = Set.fromList $ _setUseflags cfg 
-      setPkgs = flattenPackages globals (_setPackages cfg)
-      setDeps = flattenPackages globals (_setDependencies cfg)
+      globals = Set.fromList $ _setUseflags cfg
+      setPkgs = flattenPackages globals $ _setPackages cfg
+      setDeps = flattenPackages globals $ _setDependencies cfg
    in mergePackages setPkgs setDeps

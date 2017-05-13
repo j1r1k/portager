@@ -174,7 +174,7 @@ instance WithUseflags SetConfiguration where
 class WithDependencies a where
   depL :: Lens' a [Package]
   dep :: [ReaderT PortagerConfiguration Identity Package] -> PortageT a ()
-  -- just alias for nice alignments
+  -- an alias for nice alignments
   deps :: [ReaderT PortagerConfiguration Identity Package] -> PortageT a ()
   deps = dep
   dep ds = do
@@ -222,7 +222,7 @@ class (Monoid (Configuration w)) => With w where
   with :: w -> PortageT (Configuration w) () -> ReaderT PortagerConfiguration Identity w
   with w s = do
     cfg <- execStateT s mempty
-    return $ set configurationL cfg w
+    pure $ set configurationL cfg w
 
 instance With Package where
   type Configuration Package = PackageConfiguration
