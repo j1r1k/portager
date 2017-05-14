@@ -57,10 +57,10 @@ mergePackages = merge _fpAtom
 flattenPackage :: Set Use -> Package -> FlatPackage
 flattenPackage globals pkg =
   let pkgcfg = _configuration pkg
-      useflags = Set.fromList $ _useflags pkgcfg
-      keywords = Set.fromList $ _keywords pkgcfg
-      licenses = Set.fromList $ _licenses pkgcfg
-   in FlatPackage (_atom pkg) (useflags `Set.union` globals) keywords licenses
+      ufs = Set.fromList $ _useflags pkgcfg
+      kws = Set.fromList $ _keywords pkgcfg
+      lcs = Set.fromList $ _licenses pkgcfg
+   in FlatPackage (_atom pkg) (ufs `Set.union` globals) kws lcs
 
 -- |Converts a 'Package' to a list of 'FlatPackages' with set 'Use' flags applied.
 flatten :: Set Use -> Package -> Set FlatPackage

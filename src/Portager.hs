@@ -3,8 +3,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Portager (
     module Portager.DSL
-  , portager
   , PortageR
+  , portager
   , runPortageR
 ) where
 
@@ -21,30 +21,19 @@ import Portager.Options (Options(..), WorldSet, withOptions)
 import Portager.Writes (createPortageConfig, writePortageSetConfigs)
 import Portager.DSL
 
-newtype PortageR a = PortageR (ReaderT PortagerConfiguration Identity a)
+type PortageR a = ReaderT PortagerConfiguration Identity a
 
-instance Functor PortageR where
-  fmap f (PortageR r) = PortageR (fmap f r)
-
-instance Applicative PortageR where
-  pure = PortageR . pure
-  (PortageR f) <*> (PortageR a) = PortageR (f <*> a)
-
-instance Monad PortageR where
-  (PortageR a) >>= f = PortageR (a >>= unwrapPortageR . f)
-    where unwrapPortageR (PortageR r) = r
-
+-- |Triggers Orphan Instances Warning. 
+-- It seems that wrapping it in a newtype is not worth the trouble.
 instance IsString a => IsString (PortageR a) where
-  fromString = pure . fromString
+  fromString = return . fromString
 
-runPortageR :: PortagerConfiguration -> PortageR a -> a
-runPortageR cfg (PortageR r) = runIdentity $ runReaderT r cfg
+runPortageR :: PortagerConfiguration -> ReaderT PortagerConfiguration Identity a -> a
+runPortageR cfg r = runIdentity $ runReaderT r cfg
 
--- |Parses a text to a list of 'WorldSet's
 parseWorldSets :: Text -> [WorldSet]
 parseWorldSets = mapMaybe (Text.stripPrefix "@") . Text.lines
 
--- |Reads portage @world_sets@ file
 readWorldSets :: FilePath -> IO [WorldSet]
 readWorldSets = fmap parseWorldSets . Text.readFile
 

@@ -1,0 +1,19 @@
+name:                portager-local
+version:             0.1.0.0
+synopsis:            Initial project template from stack
+license:             BSD3
+license-file:        LICENSE
+author:              Jiri Marsicek
+maintainer:          jiri.marsicek@gmail.com
+copyright:           2016 Jiri Marsicek
+category:            Web
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable portager-local
+  hs-source-dirs:      .
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , portager
+  default-language:    Haskell2010

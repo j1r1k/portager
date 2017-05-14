@@ -57,7 +57,6 @@ x86 = Arch "x86"
 
 data PortagerConfiguration = PortagerConfiguration { _arch :: Arch } deriving (Eq, Show)
 
-
 type PortageT c a = StateT c (ReaderT PortagerConfiguration Identity) a
 
 class ShowText a where
