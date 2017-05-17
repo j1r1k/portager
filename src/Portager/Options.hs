@@ -1,3 +1,13 @@
+-- |
+-- Module      :  Portager.Options
+-- Copyright   :  (C) 2017 Jiri Marsicek
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  Jiri Marsicek <jiri.marsicek@gmail.com>
+--
+-- This module provides functionality for parsing command line options and executing arbitrary 'IO' program 
+-- with 'Options' as an input.
+--
 module Portager.Options where
 
 import Options.Applicative

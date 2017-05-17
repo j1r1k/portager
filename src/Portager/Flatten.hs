@@ -34,6 +34,8 @@ instance Semigroup FlatPackage where
   FlatPackage atom us ks ls <> FlatPackage _ us' ks' ls' = 
     FlatPackage atom (us `Set.union` us') (ks `Set.union` ks') (ls `Set.union` ls')
 
+-- |Merges two lists together, if both lists are sorted in ascending order, the result will be also sorted
+-- in ascending order.
 mergeLists :: Ord a => [a] -> [a] -> [a]
 mergeLists [] bs = bs
 mergeLists as [] = as
@@ -41,6 +43,8 @@ mergeLists (a : as) (b : bs)
   | a <= b = a : mergeLists as (b : bs)
   | otherwise = b : mergeLists (a : as) bs
 
+-- |Merges two sets together, performing 'sconcat' on elements that are determined to be equal by result
+-- of a function given in argument.
 merge :: (Ord a, Semigroup a, Eq b) => (a -> b) -> Set a -> Set a -> Set a
 merge get lefts rights =
   Set.fromList $
@@ -49,10 +53,12 @@ merge get lefts rights =
     List.groupBy (\a b -> get a == get b) $
     mergeLists (Set.toAscList lefts) (Set.toAscList rights)
 
+-- |Performs 'merge' of two sets of 'FlatPackage's where equality is determined by 'Atom'.
+-- See 'merge'.
 mergePackages :: Set FlatPackage -> Set FlatPackage -> Set FlatPackage
 mergePackages = merge _fpAtom
 
--- |Convert a 'Package' to a 'FlatPackage' with globals 'Use' flags applied.
+-- |Converts a 'Package' to a 'FlatPackage' with globals 'Use' flags applied.
 -- Package 'Use' flags take precedence before globals 'Use' flags.
 flattenPackage :: Set Use -> Package -> FlatPackage
 flattenPackage globals pkg =

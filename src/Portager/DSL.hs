@@ -1,3 +1,12 @@
+-- |
+-- Module      :  Portager.DSL
+-- Copyright   :  (C) 2017 Jiri Marsicek
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  Jiri Marsicek <jiri.marsicek@gmail.com>
+--
+-- This module defines portage configuration DSL language.
+--
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -43,7 +52,7 @@ import Data.String (IsString(..))
 import Data.Text (Text)
 import qualified Data.Text as Text (unwords)
 
-
+-- |An Architecture Keyword
 newtype Arch = Arch { arch :: Text } deriving (Eq, Show)
 
 instance IsString Arch where
@@ -55,6 +64,7 @@ amd64 = Arch "amd64"
 x86 :: Arch
 x86 = Arch "x86"
 
+-- |Global configuration
 data PortagerConfiguration = PortagerConfiguration { _arch :: Arch } deriving (Eq, Show)
 
 type PortageT c a = StateT c (ReaderT PortagerConfiguration Identity) a
@@ -71,7 +81,7 @@ instance ShowText a => ShowText [a] where
 
 type Name = Text
 
-
+-- |Portage Atom
 newtype Atom = Atom Name deriving (Eq, Ord, Show)
 
 instance ShowText Atom where
@@ -95,7 +105,7 @@ instance ShowText Use where
   showText (Use True t) = t
   showText (Use False t) = "-" <> t
 
-
+-- |Portage Keyword
 newtype Keyword = Keyword Text deriving (Eq, Ord, Show)
 
 instance IsString Keyword where
@@ -104,6 +114,7 @@ instance IsString Keyword where
 instance ShowText Keyword where
   showText (Keyword k) = k
 
+-- |Portage License
 newtype License = License Text deriving (Eq, Ord, Show)
 
 instance IsString License where
@@ -111,7 +122,6 @@ instance IsString License where
 
 instance ShowText License where
   showText (License l) = l
-
 
 data PackageConfiguration = PackageConfiguration
   { _useflags :: [Use]
@@ -129,9 +139,11 @@ instance Monoid PackageConfiguration where
 keywordsL :: Lens' PackageConfiguration [Keyword]
 keywordsL = lens _keywords (\cfg nks -> cfg { _keywords = nks })
 
+-- |Appends 'Keyword's to a 'PackageConfiguration'.
 keywords :: MonadState PackageConfiguration m => [Keyword] -> m ()
 keywords ks = keywordsL <>= ks
 
+-- |Appends unstable keyword for globally configured architecture to a 'PackageConfiguration'.
 unstable :: PortageT PackageConfiguration ()
 unstable = do
   a <- lift $ asks _arch
@@ -140,6 +152,7 @@ unstable = do
 licencesL :: Lens' PackageConfiguration [License]
 licencesL = lens _licenses (\cfg nls -> cfg { _licenses = nls })
 
+-- |Appends 'License's to a 'PackageConfiguration'
 license :: MonadState PackageConfiguration m => License -> m ()
 license l = licencesL <>= [l]
 
@@ -158,7 +171,9 @@ instance IsString Package where
 
 class WithUseflags a where
   useL :: Lens' a [Use]
+  -- |Appends 'Use's to an encapsulated configuration.
   use :: [Use] -> PortageT a ()
+  -- an alias for nice alignments
   uses :: [Use] -> PortageT a ()
   uses = use
   use us = useL <>= us
@@ -172,6 +187,7 @@ instance WithUseflags SetConfiguration where
 
 class WithDependencies a where
   depL :: Lens' a [Package]
+  -- |Appends 'Package's as dependencies to an encapsulated configuration.
   dep :: [ReaderT PortagerConfiguration Identity Package] -> PortageT a ()
   -- an alias for nice alignments
   deps :: [ReaderT PortagerConfiguration Identity Package] -> PortageT a ()
@@ -201,6 +217,7 @@ instance Monoid SetConfiguration where
 setPackagesL :: Lens' SetConfiguration [Package]
 setPackagesL = lens _setPackages (\cfg nps -> cfg { _setPackages = nps })
 
+-- |Appends 'Package's to a 'SetConfiguration' as explicit dependencies (listed in set file)
 pkgs :: [ReaderT PortagerConfiguration Identity Package] -> PortageT SetConfiguration ()
 pkgs ps = do
   ps' <- lift $ sequence ps
@@ -214,7 +231,7 @@ data PackageSet = PackageSet
 instance IsString PackageSet where
   fromString s = PackageSet (fromString s) mempty
 
-
+-- |A class for modifications to an encapsulated configuration of 'w'
 class (Monoid (Configuration w)) => With w where
   type Configuration w
   configurationL :: Lens' w (Configuration w)

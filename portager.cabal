@@ -1,6 +1,6 @@
 name:                portager
 version:             0.1.0.0
-synopsis:            DSL for configuring world sets in portage
+synopsis:            DSL for configuring Gentoo portage
 description:         Please see README.md
 homepage:            https://github.com/j1r1k/portager
 license:             BSD3

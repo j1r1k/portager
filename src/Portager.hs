@@ -18,7 +18,7 @@ import qualified Data.Text as Text (lines, stripPrefix)
 import qualified Data.Text.IO as Text (readFile)
 
 import Portager.Options (Options(..), WorldSet, withOptions)
-import Portager.Writes (createPortageConfig, writePortageSetConfigs)
+import Portager.Writes (createPortageSetConfig, writePortageSetConfigs)
 import Portager.DSL
 
 type PortageR a = ReaderT PortagerConfiguration Identity a
@@ -40,4 +40,4 @@ readWorldSets = fmap parseWorldSets . Text.readFile
 portager :: PortagerConfiguration -> [PortageR PackageSet] -> IO ()
 portager cfg ps = withOptions $ \opts -> do
   ws <- readWorldSets (_worldSets opts)
-  runReaderT (writePortageSetConfigs ws $ map createPortageConfig $ runPortageR cfg $ sequence ps) opts
+  runReaderT (writePortageSetConfigs ws $ map createPortageSetConfig $ runPortageR cfg $ sequence ps) opts
