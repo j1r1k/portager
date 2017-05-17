@@ -1,0 +1,6 @@
+app-editors/neovim python
+dev-db/sqlite secure-delete
+dev-lua/lpeg luajit
+dev-lua/mpack luajit
+sys-fs/cryptsetup urandom
+sys-libs/ncurses gpm

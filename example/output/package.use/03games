@@ -1,0 +1,15 @@
+dev-libs/openssl abi_x86_32
+media-libs/libjpeg-turbo abi_x86_32
+media-libs/libpng abi_x86_32
+media-libs/mesa abi_x86_32
+media-libs/tiff abi_x86_32
+virtual/glu abi_x86_32
+virtual/jpeg abi_x86_32
+virtual/libffi abi_x86_32
+virtual/libgudev abi_x86_32
+virtual/libiconv abi_x86_32
+virtual/libintl abi_x86_32
+virtual/libudev abi_x86_32
+virtual/libusb abi_x86_32
+virtual/opengl abi_x86_32
+virtual/pkgconfig abi_x86_32

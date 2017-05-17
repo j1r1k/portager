@@ -1,0 +1,1 @@
+dev-vcs/git-annex -assistant -feed -quvi -s3 -tahoe -torrentparser -webapp -webdav -xmpp

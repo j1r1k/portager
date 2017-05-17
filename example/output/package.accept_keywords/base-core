@@ -1,0 +1,9 @@
+app-editors/neovim ~amd64
+dev-libs/libtermkey ~amd64
+dev-libs/libvterm ~amd64
+dev-libs/msgpack ~amd64
+dev-libs/unibilium ~amd64
+dev-lua/lpeg ~amd64
+dev-lua/mpack ~amd64
+dev-python/neovim-python-client ~amd64
+sys-apps/util-linux ~amd64

@@ -1,0 +1,4 @@
+app-admin/sudo
+app-editors/neovim
+sys-fs/cryptsetup
+sys-apps/systemd
