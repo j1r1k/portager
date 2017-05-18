@@ -2,7 +2,7 @@
 
 This is an example of usage of Portager DSL.
 
-See [[Main.hs]] for a complete configuration of portage in one file. It has some inline comments explaining the usage.
+See [Main.hs](Main.hs) for a complete configuration of portage in one file. It has some inline comments explaining the usage.
 
 ## How to run it
 

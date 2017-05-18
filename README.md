@@ -1,10 +1,16 @@
-# Portager - A Configuration DSL for Gentoo's Portage
+# Portager - DSL for configuring Gentoo's Portage
 
 Portager is here to help you maintain your Gentoo's Portage configuration sane. 
 
 ## Usage
 
-See [[example/README.md]] for an example.
+Import `Portager` and run `portager` in your `main` function. It accepts two parameters:
+- a configuration (currently contains only selected architecture - e.g. `amd64`)
+- a list of `PortageR PackageSet`s. The type is as complex as it is in order to push down the sequencing down to the library function.
+
+### Example Project
+
+See [example/README.md](example/README.md) for an example of a full project.
 
 Portager library is not yet available on hackage. You can add it as a package dependency in `stack.yaml` (as in example project)
 
@@ -22,7 +28,7 @@ Portager allows you to track those changes right where you define that you reque
 
 Having following complete Portager configuration:
 
-```
+```haskell
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
@@ -42,7 +48,7 @@ main = portager (PortagerConfiguration { _arch = amd64 })
     [ "graphics" `with` pkgs [ inkscape, "media-gfx/gimp" ] ]
 ```
 
-And corresponding world_sets file:
+And corresponding `world_sets` file:
 ```
 @graphics
 ```
@@ -50,22 +56,22 @@ And corresponding world_sets file:
 Results in creation of following files:
 
 ```
-==> outputz/package.accept_keywords/graphics <==
+==> package.accept_keywords/graphics <==
 media-libs/libpng ~amd64
 
-==> outputz/package.use/01graphics <==
+==> package.use/01graphics <==
 app-text/poppler cairo
 dev-python/pillow jpeg2k truetype
 media-gfx/inkscape exif imagemagick
 
-==> outputz/sets/graphics <==
+==> sets/graphics <==
 media-gfx/inkscape
 media-gfx/gimp
 ```
 
 Once we get rid of `inkscape`:
 
-```
+```haskell
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
@@ -79,13 +85,13 @@ main = portager (PortagerConfiguration { _arch = amd64 })
 It will result in creation of just a set file:
 
 ```
-==> outputz/sets/graphics <==
+==> sets/graphics <==
 media-gfx/gimp
 ```
 
 ### Clear Separation of Configuration of Different Sets
 
-Portager operates on level of sets. Set is a collection of atoms that can be requested to be installed by `emerge`. This can be made permanent by adding the set to a world sets file (`/var/lib/portage/world_sets`).
+Portager operates on level of sets. Set is a collection of atoms that can be requested to be installed by `emerge`. This can be made permanent by adding the set to a world sets file `/var/lib/portage/world_sets`.
 
 This has a benefit that when you later on decide you don't need a set of packages anymore, you just get rid of it, with all useflag, keyword and license settings.
 
@@ -93,10 +99,24 @@ Similarly to global useflags defined by adding them to `USE` variable, you can d
 
 Having following complete Portager configuration:
 
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+module Main where
+
+import Portager
+
+desktopMedia :: PortageR PackageSet
+desktopMedia = "desktop-media" `with` do
+    uses [ "X" ]
+    pkgs [ "media-gfx/gpicview"
+         , "media-video/vlc"
+         ]
+
+main :: IO ()
+main = portager (PortagerConfiguration { _arch = amd64 }) [ desktopMedia ]
 ```
 
-```
-And corresponding world_sets file:
+And corresponding `world_sets` file:
 
 ```
 desktop-media
@@ -105,22 +125,18 @@ desktop-media
 Results in creation of following files:
 
 ```
-==> outputz/package.use/01desktop-media <==
+==> package.use/01desktop-media <==
 media-gfx/gpicview X
 media-video/vlc X
 
-==> outputz/sets/desktop-media <==
+==> sets/desktop-media <==
 media-gfx/gpicview
 media-video/vlc
 ```
 
 Atom `media-gfx/gpicview` has `X` useflag enabled even though it is not defined for the it.
 
-## Functionality
-
-Import `Portager` and run `portager` in your `main` function. It accepts two parameters:
-- a configuration (currently contains only selected architecture - e.g. `amd64`)
-- a list of `PortageR PackageSet`s. The type is as complex as it is in order to push down the sequencing down to the library function.
+## Additional Functionality
 
 ### Order of Sets Matters
 
@@ -128,7 +144,7 @@ The order of sets is important if you define overriding useflag settings.
 
 Having following complete Portager configuration:
 
-```
+```haskell
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
@@ -141,7 +157,7 @@ main = portager (PortagerConfiguration { _arch = amd64 })
     ]
 ```
 
-And corresponding world_sets file (here order does not matter for Portager):
+And corresponding `world_sets` file (here order does not matter for Portager):
 
 ```
 @console-tools
