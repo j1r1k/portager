@@ -14,12 +14,13 @@ import Control.Monad (unless)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (ReaderT, asks)
 
+import Data.List (partition)
 import Data.Maybe (mapMaybe)
 import Data.Semigroup ((<>))
 import qualified Data.Set as Set (toAscList)
 import Data.Text (Text)
-import qualified Data.Text as Text (unlines, unpack)
-import qualified Data.Text.IO as Text (writeFile)
+import qualified Data.Text as Text (unlines, unpack, unwords)
+import qualified Data.Text.IO as Text (putStrLn, writeFile)
 
 import System.Directory (createDirectoryIfMissing)
 import System.FilePath (FilePath, (</>))
@@ -120,4 +121,7 @@ writePortageSetConfig index (PortageSetConfig pName pSet pUseflags pKeywords pLi
 
 -- |Performs 'writePortageSetConfig' for WorldSets given as parameter
 writePortageSetConfigs :: [WorldSet] -> [PortageSetConfig] -> ReaderT Options IO ()
-writePortageSetConfigs ws = mapM_ (uncurry $ writePortageSetConfig) . zip [1..] . filter (\psc -> _portageSetName psc `elem` ws)
+writePortageSetConfigs ws cfgs =
+  let (process, skipped) = partition (\psc -> _portageSetName psc `elem` ws) cfgs
+   in do unless (null skipped) $ lift $ Text.putStrLn $ "Skipping configuration for sets not listed in world_sets files: " <> (Text.unwords $ map _portageSetName skipped)
+         mapM_ (uncurry $ writePortageSetConfig) $ zip [1..] process
