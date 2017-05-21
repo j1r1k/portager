@@ -12,8 +12,6 @@ Import `Portager` and run `portager` in your `main` function. It accepts two par
 
 See [example/README.md](example/README.md) for an example of a full project.
 
-Portager library is not yet available on hackage. You can add it as a package dependency in `stack.yaml` (as in example project)
-
 ## Motivation and Examples
 
 ### Everyting in One File
