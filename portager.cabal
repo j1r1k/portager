@@ -1,5 +1,5 @@
 name:                portager
-version:             0.1.1.0
+version:             0.1.1.1
 synopsis:            DSL for configuring Gentoo portage
 description:         Please see README.md
 homepage:            https://github.com/j1r1k/portager
@@ -23,7 +23,7 @@ library
                      , Portager.Options
                      , Portager.Writes
   ghc-options:         -Wall -fno-warn-orphans
-  build-depends:       base >= 4.7 && < 5
+  build-depends:       base >= 4.9 && < 5
                      , containers
                      , directory
                      , filepath
