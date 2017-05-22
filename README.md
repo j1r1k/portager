@@ -10,7 +10,7 @@ Import `Portager` and run `portager` in your `main` function. It accepts two par
 
 ### Example Project
 
-See [example/README.md](example/README.md) for an example of a full project.
+See [example/README.md](https://github.com/j1r1k/portager/blob/master/example/README.md) for an example of a full project.
 
 ## Motivation and Examples
 
